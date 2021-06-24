@@ -1,0 +1,15 @@
+stages:
+  - test
+
+test:
+  stage: test
+  before_script:
+    - mkdir pillar/
+    - ln -s $PILLAR_LETSENCRYPT_DNS pillar/letsencrypt.sls
+    - export PATH="$HOME/.rbenv/bin:$PATH"
+    - eval "$(rbenv init -)"
+    - gem install bundler
+    - rbenv rehash
+    - bundler install
+  script:
+    - bundler exec kitchen test

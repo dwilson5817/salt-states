@@ -1,0 +1,88 @@
+---
+driver:
+  name: docker
+  use_sudo: false
+  privileged: true
+
+platforms:
+  - name: ubuntu
+    driver_config:
+      run_command: /lib/systemd/systemd
+
+suites:
+  - name: salt
+
+provisioner:
+  name: salt_solo
+  salt_install: bootstrap
+  salt_version: latest
+  salt_bootstrap_url: https://bootstrap.saltstack.com
+  salt_bootstrap_options: -X -p git -p curl -p sudo
+  is_file_root: true
+  require_chef: false
+  salt_copy_filter:
+    - .git/
+    - .gitignore
+    - .kitchen/
+    - .kitchen.yml
+    - Gemfile
+    - Gemfile.lock
+    - tests/
+  dependencies:
+    - name: letsencrypt
+      repo: git
+      source: https://gitlab.dylanwilson.dev/infrastructure/salt-formulas/letsencrypt-formula.git
+    - name: munin
+      repo: git
+      source: https://gitlab.dylanwilson.dev/infrastructure/salt-formulas/munin-formula.git
+    - name: vault
+      repo: git
+      source: https://gitlab.dylanwilson.dev/infrastructure/salt-formulas/vault-formula.git
+  state_top:
+    base:
+      "*":
+        - salt
+  pillars_from_files:
+    letsencrypt.sls: pillar/letsencrypt.sls
+  pillars:
+    top.sls:
+      base:
+        "*":
+          - letsencrypt
+          - salt
+    salt.sls:
+      testing: true
+      letsencrypt:
+        use_package: true
+        pkgs:
+          - python3-certbot-dns-cloudflare
+      munin_master:
+        globals:
+          dbdir: /var/lib/munin
+          htmldir: /var/cache/munin/www
+          logdir: /var/log/munin
+          rundir: /var/run/munin
+          tmpldir: /etc/munin/templates
+          includedir: /etc/munin/munin-conf.d
+        hosts:
+          local:
+            address: 127.0.0.1
+            use_node_name: yes
+      vault:
+        version: 1.7.3
+        platform: linux_amd64
+        dev_mode: false
+        verify_download: true
+        config:
+          ui: true
+          storage:
+            file:
+              path: /var/lib/vault/data
+          listener:
+            tcp:
+              address: 0.0.0.0:8200
+              tls_disable: true
+              tls_cert_file: ""
+              tls_key_file: ""
+          default_lease_ttl: 768h
+          max_lease_ttl: 768h
