@@ -3,6 +3,7 @@ driver:
   name: docker
   use_sudo: false
   privileged: true
+  use_internal_docker_network: true
 
 platforms:
   - name: ubuntu
