@@ -1,12 +1,11 @@
-stages:
-  - test
+image: gitlab.dylanwilson.dev:5050/infrastructure/kitchen-base:latest
+
+before_script:
+  - mkdir pillar/
+  - ln -s $PILLAR_LETSENCRYPT_DNS pillar/letsencrypt.sls
+  - bundler install
 
 test:
-  image: gitlab.dylanwilson.dev:5050/infrastructure/kitchen-base:latest
   stage: test
-  before_script:
-    - mkdir pillar/
-    - ln -s $PILLAR_LETSENCRYPT_DNS pillar/letsencrypt.sls
-    - bundler install
   script:
     - bundler exec kitchen test
